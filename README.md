@@ -1,4 +1,4 @@
-## [insert project title here]
+## [THE GOAT PROJECT]
 ### Middlebury College, Computer Science CSCI 701 (Fall 2020)
 
 ### about
