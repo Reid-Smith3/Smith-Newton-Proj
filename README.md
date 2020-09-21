@@ -5,7 +5,7 @@ Why isn't this working?
 ### about
 TODO: a few sentences describing your project
 
-view our website [here]()
+view our website [here](https://reid-smith3.github.io/Smith-Newton-Proj/)
 
 ### building
 TODO: how can someone build your project, starting from the GitHub clone/download, installing dependencies and compiling.
