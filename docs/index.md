@@ -4,7 +4,7 @@
 See the [help](help.md) for resources on writing your project website.
 
 ### About our project
-TODO
+Work in progress... movie recommendation algorithim based on past views and favorite directors, genres... 
 
 See the README in our [project repository](https://github.com/philipclaude/project-website) for information on building and using our software.
 
