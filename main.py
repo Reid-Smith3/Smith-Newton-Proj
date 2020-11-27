@@ -75,7 +75,8 @@ def openSheet():
     g_values = result_genre.get('values', [])
     n_values = result_name.get('values', [])
     y_values = result_year.get('values', [])
-
+    
+    # load from local file
 #     movie_file = open('moviedata.pickle', 'rb')
 #     movie_dict = pickle.load(movie_file)
 #     movie_file.close()
@@ -127,6 +128,14 @@ def ratingU(*args):
         return upper
     except:
         return
+    
+def advancedPref():
+    """ Create the additional user interface for finetuning
+    the user's preferences """
+    
+    preferences = tk.Tk()
+    preferences.mainloop()
+
 
 def initializeUI():
     """ Initialize the user interface"""
@@ -265,18 +274,32 @@ def initializeUI():
     
     frame_rating.pack(side='top', expand=True)
     
-    # destroy button
-    button = tk.Button(master=window, text='Enter Preferences',
+        # destroy button
+    bottom_frame = tk.Frame(master=window)
+    
+    enter_frame = tk.Frame(master=bottom_frame)
+    enter = tk.Button(master=enter_frame, text='Submit Preferences',
                          command=window.destroy, relief='raised',
                        fg='red', font=('Garamond',14,'bold'))
-    button.pack(side='bottom')
+    enter.pack(side='bottom')
+    enter_frame.pack(side='right')
+    
+    # advanced preferences button
+    advanced_frame = tk.Frame(master=bottom_frame)
+    advanced = tk.Button(master=advanced_frame, text='Advanced Preferences',
+                         command=advancedPref, relief='raised',
+                       fg='blue', font=('Garamond',14,'bold'))
+    advanced.pack(side='bottom')
+    advanced_frame.pack(side='left')
+    
+    bottom_frame.pack(side='bottom')
+    
     window.mainloop()
     
 def createList():
     """ Performs the search of the database by matching
     the user's input to the available movies, also
     restarts the UI if the user desires to search again"""
-    print(lower, upper)
 
     # add movies to different genre lists
     final_values = []
