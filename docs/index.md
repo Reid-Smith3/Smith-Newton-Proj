@@ -1,6 +1,7 @@
 ## The GOAT Project
 ## Christian doesn't know what he thinks he knows 
 ### Middlebury College, Computer Science CSCI 701 (Fall 2020)
+## Reid is a SimpPU
 
 See the [help](help.md) for resources on writing your project website.
 
