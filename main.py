@@ -26,6 +26,8 @@ lower = 0
 lower_var = ''
 upper = 10
 upper_var = ''
+fav_movies = ''
+fav_movies_var = ''
 
 # initializing the global variables for the data
 g_values = ''
@@ -110,7 +112,6 @@ def ratingL(*args):
     # subsequently changes it
     try:
         lower = lower_var.get()
-        print(lower)
         return lower
     except:
         return
@@ -124,19 +125,65 @@ def ratingU(*args):
     # subsequently changes it
     try:
         upper = upper_var.get()
-        print(upper)
         return upper
+    except:
+        return
+    
+def favoriteM(*args):
+    """Detect a change in the favorite movies variable"""
+    global fav_movies
+    global fav_movies_var
+
+    # to prevent an error if the user types a value and
+    # subsequently changes it
+    try:
+        fav_movies = fav_movies_var.get()
+        return fav_movies
     except:
         return
     
 def advancedPref():
     """ Create the additional user interface for finetuning
-    the user's preferences """
+    the user's preferences"""
     
     preferences = tk.Tk()
+    
+    # enter a favorite movie
+    frame_movie = tk.Frame(master=preferences, bg='white')
+    head_movie = tk.Label(master=frame_movie, text='Fan Favorites:', bg='white',
+                    font=('Garamond',30,'bold'), fg='blue')
+    info_movie = tk.Label(master=frame_movie, text='Enter 1 or more favorite movies.',
+                    bg='white', font=('Garamond',14), fg='black')
+    head_movie.pack(side='top')
+    info_movie.pack(side='top')
+    
+    frame_movie.pack(side='top')
+    
+    # submission area for movie(s)
+    frame_movie2 = tk.Frame(master=preferences, bg='white')
+    label_movie = tk.Label(master=frame_movie2, text='Movies:', bg='white',
+                    font=('Garamond',20,'bold'), fg='black')
+    label_movie.pack(side='left')
+    
+    # set the variable for favorite movies
+    global fav_movies_var
+    fav_movies_var = tk.StringVar(frame_movie2)
+    entry_movie = tk.Entry(master=frame_movie2, font=('Garamond',14),
+                           textvariable=fav_movies_var, width=17)
+    entry_movie.pack(side='left')
+    fav_movies_var.trace("w", favoriteM) 
+    
+    frame_movie2.pack(side='top')
+    
+    # destry the advanced preferences
+    advanced_frame = tk.Frame(master=preferences, bg='white')
+    advanced = tk.Button(master=advanced_frame, text='Submit Advanced',
+                         command=preferences.destroy, relief='raised',
+                       fg='red', font=('Garamond',14,'bold'))
+    advanced.pack(side='bottom')
+    advanced_frame.pack(side='bottom')
     preferences.mainloop()
-
-
+    
 def initializeUI():
     """ Initialize the user interface"""
 
@@ -300,6 +347,11 @@ def createList():
     """ Performs the search of the database by matching
     the user's input to the available movies, also
     restarts the UI if the user desires to search again"""
+
+    print(genres)
+    print(year_start, year_end)
+    print(lower, upper)
+    print(fav_movies)
 
     # add movies to different genre lists
     final_values = []
