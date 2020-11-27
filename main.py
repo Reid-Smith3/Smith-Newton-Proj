@@ -5,6 +5,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import tkinter as tk
 from functools import partial
+from PIL import ImageTk, Image
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
@@ -83,6 +84,7 @@ def openSheet():
 #     movie_dict = pickle.load(movie_file)
 #     movie_file.close()
 
+#     print('Sheet Loaded')
     return g_values, n_values, y_values
 
 def addGenre(button):
@@ -142,17 +144,50 @@ def favoriteM(*args):
     except:
         return
     
+def info():
+    """ Creates a separate UI detailing information about the
+    background of the creators and their preferenes for movies,
+    allowing the user to generate lsits from developer picks"""
+    
+    window_info = tk.Tk()
+    
+    # Reid's frame
+    reid_frame = tk.Frame(master=window_info, bg='white')
+    reid_label = tk.Label(master=reid_frame, text='About Reid', bg='white',
+                    font=('Garamond',30,'bold'), fg='steel blue')
+    reid_info = tk.Label(master=reid_frame, text='Use this space to give a brief background about ourselves, our contributions to the project, \n as well as our favorite movies.',
+                    bg='white', font=('Garamond',14), fg='steel blue')
+    reid_label.pack(side='top', expand=True)
+    reid_info.pack(side='top', expand=True)
+    reid_frame.pack(side='left', expand=True)
+    
+    # Christian's frame
+    newt_frame = tk.Frame(master=window_info, bg='light grey')
+    newt_label = tk.Label(master=newt_frame, text='About Christian', bg='light grey',
+                    font=('Garamond',30,'bold'), fg='IndianRed4')
+    newt_info = tk.Label(master=newt_frame, text='Use this space to give a brief background about ourselves, our contributions to the project, \n as well as our favorite movies.',
+                    bg='light grey',font=('Garamond',14), fg='IndianRed4')
+    newt_label.pack(side='top', expand=True)
+    newt_info.pack(side='top', expand=True)
+    newt_frame.pack(side='left', expand=True)
+    
+    # EASTER EGG CONTENT to generate lists of our
+    # favorite movies here
+    
+    window_info.mainloop()
+    
 def advancedPref():
     """ Create the additional user interface for finetuning
     the user's preferences"""
     
     preferences = tk.Tk()
+    preferences.configure(bg='white')
     
     # enter a favorite movie
     frame_movie = tk.Frame(master=preferences, bg='white')
     head_movie = tk.Label(master=frame_movie, text='Fan Favorites:', bg='white',
                     font=('Garamond',30,'bold'), fg='blue')
-    info_movie = tk.Label(master=frame_movie, text='Enter 1 or more favorite movies.',
+    info_movie = tk.Label(master=frame_movie, text='Enter 1 or more favorite movies, separating \n titles with commas.',
                     bg='white', font=('Garamond',14), fg='black')
     head_movie.pack(side='top')
     info_movie.pack(side='top')
@@ -169,13 +204,13 @@ def advancedPref():
     global fav_movies_var
     fav_movies_var = tk.StringVar(frame_movie2)
     entry_movie = tk.Entry(master=frame_movie2, font=('Garamond',14),
-                           textvariable=fav_movies_var, width=17)
+                           textvariable=fav_movies_var, width=20)
     entry_movie.pack(side='left')
     fav_movies_var.trace("w", favoriteM) 
     
     frame_movie2.pack(side='top')
     
-    # destry the advanced preferences
+    # destroy the advanced preferences
     advanced_frame = tk.Frame(master=preferences, bg='white')
     advanced = tk.Button(master=advanced_frame, text='Submit Advanced',
                          command=preferences.destroy, relief='raised',
@@ -186,6 +221,48 @@ def advancedPref():
     
 def initializeUI():
     """ Initialize the user interface"""
+    
+    window = tk.Tk()
+    window.configure(bg='white')
+    
+    # title of application
+    frame_title = tk.Frame(master=window, bg='white')
+    title = tk.Label(master=frame_title, text='Groovy Movie Recommendation', bg='white',
+                    font=('Garamond',36,'bold'), fg='steel blue')
+    title.pack(side='top')
+    title_info = tk.Label(master=frame_title, text='Brought to you by: Christian Newton and Reid Smith', bg='white',
+                    font=('Garamond',16,'bold'), fg='black')
+    title_info.pack(side='top')
+    title_info2 = tk.Label(master=frame_title, text='Sponsored by: Philip Caplan, Esq.', bg='white',
+                    font=('Garamond',12), fg='gray')
+    title_info2.pack(side='top')
+    frame_title.pack(side='top')
+    
+    # load image (CHANGE TO LOGO)
+    img = ImageTk.PhotoImage(Image.open('newtreid.jpg'))
+    panel = tk.Label(master=window, image=img, bg='white')
+    panel.pack(side='top', fill='both',expand=True)
+    
+    # button performs 3 tasks: destroys the window, loads info
+    # from database, and opens main UI
+    bottom_frame = tk.Frame(master=window, bg='white')
+    button_search = tk.Button(master=bottom_frame, text='Search!',
+                         command=lambda:[window.destroy(), openSheet(), mainUI()],
+                      relief='raised', fg='red', font=('Garamond',14,'bold'))
+    button_search.pack(side='right', expand=True)
+    
+    # info button for creators and easter egg movie lists
+    button_info = tk.Button(master=bottom_frame, text='Info',
+                    command=info, relief='raised', fg='black',
+                    font=('Garamond',14,'bold'))   
+    button_info.pack(side='left', expand=True)
+    
+    bottom_frame.pack(side='bottom', expand=True)
+    
+    window.mainloop()
+    
+def mainUI():
+    """ Create the layout for the main user interface"""
 
     window = tk.Tk()
     
@@ -214,7 +291,7 @@ def initializeUI():
             button_frame.pack(side='left')
         button_genre = tk.Button(master=button_frame, text=db_genres[i],
                        font=('Garamond',16), fg=genre_colors[i%8],
-                    command=partial(addGenre, db_genres[i]), relief='groove', bg='white')
+                    command=partial(addGenre, db_genres[i]), relief='raised', bg='white')
         button_genre.pack(side='top')
     
     frame_genre.pack(side='top',expand=True)
@@ -321,37 +398,52 @@ def initializeUI():
     
     frame_rating.pack(side='top', expand=True)
     
-        # destroy button
-    bottom_frame = tk.Frame(master=window)
+    # destroy button
+    bottom_frame = tk.Frame(master=window, bg='white')
     
-    enter_frame = tk.Frame(master=bottom_frame)
-    enter = tk.Button(master=enter_frame, text='Submit Preferences',
+    enter = tk.Button(master=bottom_frame, text='Submit Preferences',
                          command=window.destroy, relief='raised',
                        fg='red', font=('Garamond',14,'bold'))
-    enter.pack(side='bottom')
-    enter_frame.pack(side='right')
+    enter.pack(side='right')
+    
+    # allow user to acces info button in mainUI also
+    info_button = tk.Button(master=bottom_frame, text='Info',
+                         command=info, relief='raised',
+                       fg='black', font=('Garamond',14,'bold'))
+    info_button.pack(side='left')
     
     # advanced preferences button
-    advanced_frame = tk.Frame(master=bottom_frame)
-    advanced = tk.Button(master=advanced_frame, text='Advanced Preferences',
+    advanced = tk.Button(master=bottom_frame, text='Advanced',
                          command=advancedPref, relief='raised',
                        fg='blue', font=('Garamond',14,'bold'))
-    advanced.pack(side='bottom')
-    advanced_frame.pack(side='left')
+    advanced.pack(side='left')
     
     bottom_frame.pack(side='bottom')
     
+    # how to set the background for the whole window (CHANGE)
+    window.configure(bg='white')
     window.mainloop()
     
 def createList():
     """ Performs the search of the database by matching
     the user's input to the available movies, also
     restarts the UI if the user desires to search again"""
-
-    print(genres)
-    print(year_start, year_end)
-    print(lower, upper)
-    print(fav_movies)
+    
+    # clean the favorite movies input from the advanced
+    # preferences section
+    split_movies = fav_movies.split(',')
+    final_movies = []
+    for mov in split_movies:
+        strip_mov = mov.strip()
+        mov_words = strip_mov.split(' ')
+        cap = [w.capitalize() for w in mov_words]
+        title = ' '.join(cap)
+        final_movies.append(title)
+        
+#     print(genres)
+#     print(year_start, year_end)
+#     print(lower, upper)
+#     print(final_movies)
 
     # add movies to different genre lists
     final_values = []
@@ -418,14 +510,12 @@ def first():
     """Runs the process of manufacturing a list from a user's
     inputted preferences."""
     
-    # open the sheet and obtain values
-    openSheet()
-    
-    # initialize the UI for the first search
+    # initialize the UI to show the title screen
     initializeUI()
     
-    # obtain a curated list of movies and displays, also
-    # reinitializes the UI if the user wants to search again
+    # obtain a curated list of movies and displays, also gives
+    # the option of reinitializing the UI if the user wants
+    # to search again
     createList()
     
 def subsequent():
@@ -446,7 +536,8 @@ def subsequent():
     global upper
     upper = 10
   
-    initializeUI()
+    # do not go back to the main screen for subsequent runs
+    mainUI()
     
     createList()
     
