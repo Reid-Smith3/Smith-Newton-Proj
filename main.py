@@ -5,6 +5,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import tkinter as tk
 from functools import partial
+import random
 from PIL import ImageTk, Image
 
 # If modifying these scopes, delete the file token.pickle.
@@ -13,9 +14,13 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 # setting the id and ranges for the movie database
 MOVIES_SPREADSHEET_ID = '1XrT1fRhhiS_Ga7yX9AEikkK5uFoGOfIIX6UpOXKLPLI'
 name_range = 'B2:B158548'
-genre_range = 'E2:E158548'
 year_range = 'C2:C158548'
+genre_range = 'E2:E158548'
 rating_range = 'H2:H158548'
+
+# ranges for additional access
+director_range = 'F2:F158548'
+writer_range = 'G2:G158548'
 
 # initializing the global variables for the UI
 genres = []
@@ -35,16 +40,25 @@ g_values = ''
 y_values = ''
 n_values = ''
 r_values = ''
+d_values = ''
+w_values = ''
+
+# set creds to be a global variable to allow for access to
+# other data/spreadsheets once the initial call has been made
+creds = ''
 
 def openSheet():
     """ Opens the movie database and returns the relevant information"""
     
+    global creds
     creds = None
+    
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when authorization flow completes for the first time
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
             creds = pickle.load(token)
+            
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -67,26 +81,46 @@ def openSheet():
                                 range=name_range).execute()
     result_year = sheet.values().get(spreadsheetId=MOVIES_SPREADSHEET_ID,
                                 range=year_range).execute()
+    result_ratings = sheet.values().get(spreadsheetId=MOVIES_SPREADSHEET_ID,
+                                range=rating_range).execute()
     
     # modify global variables to avoid parameter passing
     # and ensure modification for future searches
     global g_values
     global n_values
     global y_values
+    global r_values
     
     # get the actual values for each call
     g_values = result_genre.get('values', [])
     n_values = result_name.get('values', [])
     y_values = result_year.get('values', [])
+    r_values = result_ratings.get('values', [])
     
     # load from local file
 #     movie_file = open('moviedata.pickle', 'rb')
 #     movie_dict = pickle.load(movie_file)
 #     movie_file.close()
 
-#     print('Sheet Loaded')
-    return g_values, n_values, y_values
-
+def openSheet2():
+    """ Load the data for directors and writers to calculate
+    correlation favorite movies from the user"""
+    
+    # Call the Sheets API
+    service = build('sheets', 'v4', credentials=creds)
+    sheet = service.spreadsheets()
+    
+    result_director = sheet.values().get(spreadsheetId=MOVIES_SPREADSHEET_ID,
+                                range=director_range).execute()
+    result_writer = sheet.values().get(spreadsheetId=MOVIES_SPREADSHEET_ID,
+                                range=writer_range).execute()
+    
+    global d_values
+    global r_values
+    
+    d_values = result_director.get('values', [])
+    w_values = result_writer.get('values', [])
+    
 def addGenre(button):
     """Add genres from each clicked button to the genre list"""
     genres.append(button)
@@ -135,14 +169,8 @@ def favoriteM(*args):
     """Detect a change in the favorite movies variable"""
     global fav_movies
     global fav_movies_var
-
-    # to prevent an error if the user types a value and
-    # subsequently changes it
-    try:
-        fav_movies = fav_movies_var.get()
-        return fav_movies
-    except:
-        return
+    fav_movies = fav_movies_var.get()
+    return fav_movies
     
 def info():
     """ Creates a separate UI detailing information about the
@@ -155,7 +183,7 @@ def info():
     reid_frame = tk.Frame(master=window_info, bg='white')
     reid_label = tk.Label(master=reid_frame, text='About Reid', bg='white',
                     font=('Garamond',30,'bold'), fg='steel blue')
-    reid_info = tk.Label(master=reid_frame, text='Use this space to give a brief background about ourselves, our contributions to the project, \n as well as our favorite movies.',
+    reid_info = tk.Label(master=reid_frame, text='Use this space to give a brief background about ourselves, \n our contributions to the project, as well as our favorite movies.',
                     bg='white', font=('Garamond',14), fg='steel blue')
     reid_label.pack(side='top', expand=True)
     reid_info.pack(side='top', expand=True)
@@ -165,7 +193,7 @@ def info():
     newt_frame = tk.Frame(master=window_info, bg='light grey')
     newt_label = tk.Label(master=newt_frame, text='About Christian', bg='light grey',
                     font=('Garamond',30,'bold'), fg='IndianRed4')
-    newt_info = tk.Label(master=newt_frame, text='Use this space to give a brief background about ourselves, our contributions to the project, \n as well as our favorite movies.',
+    newt_info = tk.Label(master=newt_frame, text='Use this space to give a brief background about ourselves, \n our contributions to the project, as well as our favorite movies.',
                     bg='light grey',font=('Garamond',14), fg='IndianRed4')
     newt_label.pack(side='top', expand=True)
     newt_info.pack(side='top', expand=True)
@@ -227,7 +255,7 @@ def initializeUI():
     
     # title of application
     frame_title = tk.Frame(master=window, bg='white')
-    title = tk.Label(master=frame_title, text='Groovy Movie Recommendation', bg='white',
+    title = tk.Label(master=frame_title, text='The GOAT Movie Recommendation', bg='white',
                     font=('Garamond',36,'bold'), fg='steel blue')
     title.pack(side='top')
     title_info = tk.Label(master=frame_title, text='Brought to you by: Christian Newton and Reid Smith', bg='white',
@@ -412,12 +440,19 @@ def mainUI():
                        fg='black', font=('Garamond',14,'bold'))
     info_button.pack(side='left')
     
-    # advanced preferences button
-    advanced = tk.Button(master=bottom_frame, text='Advanced',
-                         command=advancedPref, relief='raised',
-                       fg='blue', font=('Garamond',14,'bold'))
+    # advanced preferences button, load extra data if it has
+    # not been loaded on a previous search
+    if not d_values:
+        advanced = tk.Button(master=bottom_frame, text='Advanced',
+                command=lambda:[openSheet2(), advancedPref()], relief='raised',
+                fg='blue', font=('Garamond',14,'bold'))
+        
+    else:
+        advanced = tk.Button(master=bottom_frame, text='Advanced',
+                command=advancedPref, relief='raised',
+                fg='blue', font=('Garamond',14,'bold'))
+        
     advanced.pack(side='left')
-    
     bottom_frame.pack(side='bottom')
     
     # how to set the background for the whole window (CHANGE)
@@ -430,65 +465,158 @@ def createList():
     restarts the UI if the user desires to search again"""
     
     # clean the favorite movies input from the advanced
-    # preferences section
-    split_movies = fav_movies.split(',')
-    final_movies = []
-    for mov in split_movies:
-        strip_mov = mov.strip()
-        mov_words = strip_mov.split(' ')
-        cap = [w.capitalize() for w in mov_words]
-        title = ' '.join(cap)
-        final_movies.append(title)
+    # preferences section (USE THIS SOMEHOW)
+    if fav_movies:
+        split_movies = fav_movies.split(',')
+        final_movies = []
+        for mov in split_movies:
+            strip_mov = mov.strip()
+            mov_words = strip_mov.split(' ')
+            cap = [w.capitalize() for w in mov_words]
+            title = ' '.join(cap)
+            final_movies.append(title)
         
 #     print(genres)
 #     print(year_start, year_end)
 #     print(lower, upper)
 #     print(final_movies)
 
-    # add movies to different genre lists
-    final_values = []
-    i = 0
-    for gen in genres:
-        final_genre = []
-        for movie in g_values:
-            movie_genres = movie[0].split(',')
-            for movie_gen in movie_genres:
-                if gen == movie_gen and y_values[i][0] != '\\N':                    
-                    final_genre.append([n_values[i], y_values[i]])
-            i += 1
-        final_values.append(final_genre)
-        i = 0
-    
-    # select movies that match year range
-    real_values = []
-    for sublist in final_values:
-        real_list = []
-        for entry in sublist:
-            yr = int(entry[1][0])
-            if yr >= year_start and yr <= year_end:
-                real_list.append(entry)
-        real_values.append(real_list)
+    # first select movies that match the year and rating
+    # range and package the relevant data into a single list
+    year_subset = []
+    count = 0
+    for movie_year in y_values:
+        if movie_year[0] != '\\N':
+            yr = int(movie_year[0])
+            rating = float(r_values[count][0])
+            if (yr >= year_start and yr <= year_end) and (rating >= lower and rating <= upper):
+                local_genres = g_values[count]
+                name = n_values[count][0]
+                year_subset.append([name, yr, local_genres, rating])
+        count += 1
+            
+    # load pre-processed correlation dictionary
+    corr_file = open('correlation.pickle', 'rb')
+    corr_dict = pickle.load(corr_file)
+    corr_file.close()
+    #print(corr_dict[('Comedy', 'Drama')])
 
+    # calculate genre correlations for each movie and give
+    # each movie a unique key to later perform sort operations
+    corr_subset = {}
+    count = 0
+    for movie in year_subset:
+        movie_genres = movie[2][0]
+        search_genres = movie_genres.split(',')
+        corr_val = 0
+        local_genres = genres.copy()
+        alpha = 1
+        for movie_gen in search_genres:   
+            for gen in local_genres:
+                test_1 = (movie_gen, gen)
+                test_2 = (gen, movie_gen)
+                if movie_gen == gen:
+                    
+                    # decreases when multiple genres match
+                    corr_val += 0.75 / alpha
+                    alpha += 1
+                elif test_1 in corr_dict:
+                    corr_val += corr_dict[test_1]
+                elif test_2 in corr_dict:
+                    corr_val += corr_dict[test_2]
+        
+        # append correlation value to the end of list
+        corr_val = round(corr_val, 6)
+        movie.append(corr_val)
+        corr_subset[count] = movie
+        count += 1
+    
+    # sort dictionary based on correlation value
+    corr_sorted = sorted(corr_subset.items(), key=lambda item: item[1][4], reverse=True)
+    
+    # sort dictionary based on rating
+    rating_sorted = sorted(corr_subset.items(), key=lambda item: item[1][3], reverse=True)
+    
+    # guarantee 20 items are taken, intersection of lists
+    real_values = []
+    total = 0
+    corr_count = 0
+    rating_count = 0
+    
+    # if less than 20, 15, or 5 available, set max
+    max_corr = len(corr_sorted)
+    max_rating = len(rating_sorted)
+    max_total = max_corr + max_rating
+    if max_total >= 20:
+        max_total = 20
+    if max_corr >= 15:
+        max_corr = 15
+    if max_rating >= 5:
+        max_rating = 5
+    
+    while total < max_total:
+        
+        # ensure a balance of correlation to rating
+        if corr_count < max_corr: 
+            corr_id = corr_sorted[0][0]
+            corr_match = False
+            for title in real_values:
+                if title[0] == corr_id:
+                    corr_match = True
+                    corr_sorted.pop(0)
+                    
+            if not corr_match:
+                real_values.append(corr_sorted[0][1])
+                corr_sorted.pop(0)
+                corr_count += 1
+                total += 1
+            
+        if total == 20:
+            break
+        
+        # ensure a balance of rating to correlation
+        if rating_count < max_rating:
+            rating_id = rating_sorted[0][0]
+            rating_match = False
+            for title in real_values:
+                if title[0] == rating_id:
+                    rating_match = True
+                    rating_sorted.pop(0)
+                    
+            if not rating_match:
+                real_values.append(rating_sorted[0][1])
+                rating_sorted.pop(0)
+                rating_count += 1
+                total += 1
+                
+    # shuffle final list to create nuanced feel for user
+    random.shuffle(real_values)
+    
     # display separate lists for each genre (CHANGE)
     window_display = tk.Tk()
-    for i in range(len(real_values)):
-        text_box = tk.Text(master=window_display, wrap='none',
+    text_box = tk.Text(master=window_display, wrap='none',
                            font=('Garamond', 12))
-        entry_num = len(real_values[i]) - 1
-        for j in range(len(real_values[i])):
-            row = entry_num - j
-            name_val = real_values[i][row][0][0]
-            year_val = real_values[i][row][1][0]
-            label_num = row + 1
-            text_box.insert(1.0, str(label_num) + '. ' +
-                            str(name_val) + ': ' + str(year_val) + '\n')
-        text_box.pack(side='top')
-        text_box.insert(1.0, str(genres[i]) + ': Year \n\n')
     
-    # user did not submit any preferences, avoid error
-    if not real_values:
-        text_box = tk.Text(master=window_display, wrap='none',
-                           font=('Garamond', 12))
+    # user did submit preferences
+    # FIGURE OUT GOOD WAY TO DISPLAY
+    if real_values and genres:
+        entry_num = len(real_values) - 1
+        for i in range(len(real_values)):
+            row = entry_num - i
+            name_val = real_values[row][0]
+            year_val = real_values[row][1]
+            genres_val = real_values[row][2]
+            corr = real_values[row][4]
+            corr_val = round(corr, 6)
+            label_num = row + 1
+            text_box.insert(1.0, str(label_num) + '. ' + str(name_val)
+                            + ': ' + str(year_val) + ': ' + str(genres_val) +
+                            ':' + str(corr_val) + '\n')
+        text_box.pack(side='top')
+        text_box.insert(1.0, 'Title: Year: Genres: Correlation Values' + '\n\n')
+    
+    # force user to select genres to generate a movie list
+    else:
         text_box.insert(1.0, 'No data found.')
         text_box.pack(side='top')
     
