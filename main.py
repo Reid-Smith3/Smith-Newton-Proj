@@ -122,14 +122,15 @@ def openSheet2():
     
     d_values = result_director.get('values', [])
     w_values = result_writer.get('values', [])
-    
+
 def addGenre(button):
     """Add genres from each clicked button to the genre list"""
     genres.append(button)
     
 def addMovie(button):
     """Add movies from each clicked button to the user list"""
-    user_list.append(button)
+    if button not in user_list:
+        user_list.append(button)
     
 def removeMovie(button):
     """Add movies from each clicked button to the user list"""
@@ -272,14 +273,22 @@ def userList():
     window_display.configure(bg='white')
     top_frame = tk.Frame(master=window_display, bg='white')
     text_frame = tk.Frame(master=top_frame, bg='white')
-    text_box = tk.Text(master=text_frame, wrap='none', height=40,
-                           font=('Garamond', 14))
+    
+    # scale to length of list
+    if user_list:
+        user_length = len(user_list)
+        scale = 20 / user_length
+        height_var = 40 / scale
+    else:
+        height_var = 5
+    text_box = tk.Text(master=text_frame, wrap='none',
+                       height=height_var, font=('Garamond', 14))
     
     # user did submit preferences, FIGURE OUT GOOD WAY TO DISPLAY
     user_frame = tk.Frame(master=top_frame, bg='white', height=40)
     if user_list:
-        entry_num = len(user_list) - 1
-        for i in range(len(user_list)):
+        entry_num = user_length - 1
+        for i in range(user_length):
             row = entry_num - i
             name_val = user_list[row][0]
             year_val = user_list[row][1]
@@ -291,7 +300,7 @@ def userList():
             # add button for each movie
             button_movie = tk.Button(master=user_frame, text='-',
                        font=('Garamond',16,'bold'), fg='red3', height=1, width=4,
-                    command=partial(removeMovie, user_list[row]), relief='raised')
+                    command=partial(removeMovie, user_list[i]), relief='raised')
             button_movie.pack()
             
             text_box.insert(1.0, str(label_num) + '. ' + str(name_val)
@@ -588,13 +597,21 @@ def createList():
     count = 0
     
     # use the maximum correlation value for matching genres
-    max_corrval = 2 * max(corr_dict.values())
+    max_corrval = 1.5 * max(corr_dict.values())
     for movie in year_subset:
         movie_genres = movie[2][0]
         search_genres = movie_genres.split(',')
         corr_val = 0
         local_genres = genres.copy()
+        
+        # decrease correlation when multiple genres match
         alpha = 1
+        
+        # decrease correlation for triple genre keys
+        beta = len(search_genres)
+        
+        # decrease correlation for more triple genres comparisons
+        gamma = len(local_genres)
         
         # paired genre correlation
         for movie_gen in search_genres:   
@@ -612,22 +629,28 @@ def createList():
                     corr_val += corr_dict[test_2]
         
         # triple genre correlation with two from database
-        if len(search_genres) == 2:
+        if beta == 2:
             g1 = search_genres[0]
             g2 = search_genres[1]
+            
+            # scale permutations with 2 genres
+            delta = beta * gamma
+            
+            # permute all possible keys
             for gen in local_genres:
-                
-                # permute all possible keys
                 perm_twogen = list(permutations([g1,g2,gen]))
                 for perm in perm_twogen:
                     if perm in corr_dict:
-                        corr_val += corr_dict[perm]
+                        corr_val += corr_dict[perm] / delta
         
         # triple genre correlation with three from database
-        if len(search_genres) == 3:
+        if beta == 3:
             g1 = search_genres[0]
             g2 = search_genres[1]
             g3 = search_genres[2]
+            
+            # scale permutations with 3 genres
+            delta = beta * beta * gamma
             
             # permute all possible keys
             for gen in local_genres:
@@ -636,15 +659,16 @@ def createList():
                 perm_threegen_3 = list(permutations([g2,g3,gen]))
                 for perm in perm_threegen_1:
                     if perm in corr_dict:
-                        corr_val += corr_dict[perm]
+                        corr_val += corr_dict[perm] / delta
                 for perm in perm_threegen_2:
                     if perm in corr_dict:
-                        corr_val += corr_dict[perm]
+                        corr_val += corr_dict[perm] / delta
                 for perm in perm_threegen_3:
                     if perm in corr_dict:
-                        corr_val += corr_dict[perm]
+                        corr_val += corr_dict[perm] / delta
                              
-        # append correlation value to the end of list
+        # scale final correlation value by alpha and beta
+        corr_val = alpha * corr_val / beta
         corr_val = round(corr_val, 6)
         movie.append(corr_val)
         corr_subset[count] = movie
@@ -677,6 +701,28 @@ def createList():
     if max_rating >= 4:
         max_rating = 4
         
+    # get an even spread of years
+    year_range = year_end - year_start
+    half_decades = year_range // 5
+    if half_decades == 0:
+        half_decades = 1
+
+    decade_sorted = corr_sorted.copy()
+    temp_sorted = corr_sorted.copy()
+    final_sorted = []
+    for i in range(half_decades):
+        year_maxcorr = decade_sorted[0][1][1]
+        max_corrsort = decade_sorted[0][1][4]
+        half_list = []
+        for sort in decade_sorted:
+            if sort[1][1] - 5 > year_maxcorr:
+                break
+            if sort[1][4] + 0.05 >= max_corrsort and sort[1][1] - 5 <= year_maxcorr:
+                half_list.append(sort)
+            temp_sorted.pop(0)
+        decade_sorted = temp_sorted
+        final_sorted.append(half_list)
+                
     while total < max_total:
         
         # ensure a balance of correlation to rating
@@ -719,8 +765,12 @@ def createList():
     window_display = tk.Tk()
     top_frame = tk.Frame(master=window_display, bg='white')
     text_frame = tk.Frame(master=top_frame, bg='white')
-    text_box = tk.Text(master=text_frame, wrap='none', height=40,
-                           font=('Garamond', 14))
+    if real_values:
+        height_var = 40
+    else:
+        height_var = 5
+    text_box = tk.Text(master=text_frame, wrap='none',
+                       height=height_var, font=('Garamond', 14))
     
     # user did submit preferences, FIGURE OUT GOOD WAY TO DISPLAY
     user_frame = tk.Frame(master=top_frame, bg='white')
@@ -738,7 +788,7 @@ def createList():
             # add button for each movie
             button_movie = tk.Button(master=user_frame, text='+',
                        font=('Garamond',16,'bold'), fg='dark green', height=1, width=4,
-                    command=partial(addMovie, real_values[row]), relief='raised')
+                    command=partial(addMovie, real_values[i]), relief='raised')
             button_movie.pack(side='top')
             
             text_box.insert(1.0, str(label_num) + '. ' + str(name_val)
