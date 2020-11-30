@@ -5,6 +5,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import tkinter as tk
 from functools import partial
+from itertools import permutations
 import random
 from PIL import ImageTk, Image
 
@@ -34,6 +35,7 @@ upper = 10
 upper_var = ''
 fav_movies = ''
 fav_movies_var = ''
+user_list = []
 
 # initializing the global variables for the data
 g_values = ''
@@ -124,6 +126,15 @@ def openSheet2():
 def addGenre(button):
     """Add genres from each clicked button to the genre list"""
     genres.append(button)
+    
+def addMovie(button):
+    """Add movies from each clicked button to the user list"""
+    user_list.append(button)
+    
+def removeMovie(button):
+    """Add movies from each clicked button to the user list"""
+    bad = user_list.index(button)
+    user_list.pop(bad)
 
 def callbackS(*args):
     """Detect a change in the year start variable"""
@@ -171,6 +182,12 @@ def favoriteM(*args):
     global fav_movies_var
     fav_movies = fav_movies_var.get()
     return fav_movies
+
+def saveList(passed_list=user_list):
+    """ Saves the user generated list to a local file"""
+    save_file = open('savedlist.txt', 'w')
+    for movie in passed_list:
+        save_file.write('%s\n' % movie)
     
 def info():
     """ Creates a separate UI detailing information about the
@@ -203,7 +220,7 @@ def info():
     # favorite movies here
     
     window_info.mainloop()
-    
+
 def advancedPref():
     """ Create the additional user interface for finetuning
     the user's preferences"""
@@ -232,7 +249,7 @@ def advancedPref():
     global fav_movies_var
     fav_movies_var = tk.StringVar(frame_movie2)
     entry_movie = tk.Entry(master=frame_movie2, font=('Garamond',14),
-                           textvariable=fav_movies_var, width=20)
+                           textvariable=fav_movies_var, width=17)
     entry_movie.pack(side='left')
     fav_movies_var.trace("w", favoriteM) 
     
@@ -247,6 +264,71 @@ def advancedPref():
     advanced_frame.pack(side='bottom')
     preferences.mainloop()
     
+def userList():
+    """ Create the list for the user"""
+    
+    # set up display
+    window_display = tk.Tk()
+    window_display.configure(bg='white')
+    top_frame = tk.Frame(master=window_display, bg='white')
+    text_frame = tk.Frame(master=top_frame, bg='white')
+    text_box = tk.Text(master=text_frame, wrap='none', height=40,
+                           font=('Garamond', 14))
+    
+    # user did submit preferences, FIGURE OUT GOOD WAY TO DISPLAY
+    user_frame = tk.Frame(master=top_frame, bg='white', height=40)
+    if user_list:
+        entry_num = len(user_list) - 1
+        for i in range(len(user_list)):
+            row = entry_num - i
+            name_val = user_list[row][0]
+            year_val = user_list[row][1]
+            genres_val = user_list[row][2]
+            corr = user_list[row][4]
+            corr_val = round(corr, 6)
+            label_num = row + 1
+            
+            # add button for each movie
+            button_movie = tk.Button(master=user_frame, text='-',
+                       font=('Garamond',16,'bold'), fg='red3', height=1, width=4,
+                    command=partial(removeMovie, user_list[row]), relief='raised')
+            button_movie.pack()
+            
+            text_box.insert(1.0, str(label_num) + '. ' + str(name_val)
+                            + ': ' + str(year_val) + ': ' + str(genres_val) +
+                            ': ' + str(corr_val) + '\n\n')
+        text_box.pack(side='top')
+        user_frame.pack(side='right')
+    
+    # force user to select genres to generate a movie list
+    else:
+        text_box.insert(1.0, 'No data found.')
+        text_box.pack(side='top')
+    text_frame.pack(side='left')
+    top_frame.pack(side='top')
+        
+    # search again button
+    bottom_frame = tk.Frame(master=window_display, bg='gray')
+    search_button = tk.Button(master=bottom_frame, text='Refresh List',
+                        command=lambda:[window_display.destroy(), userList()],
+                       relief='raised', fg='blue', font=('Garamond',16,'bold'))
+    search_button.pack(side='right', expand=True)
+    
+    # close current button
+    exit_button = tk.Button(master=bottom_frame, text='Exit List',
+                        command=window_display.destroy,
+                       relief='raised', fg='red', font=('Garamond',16,'bold'))
+    exit_button.pack(side='left', expand=True) 
+    
+    # save list button
+    save_button = tk.Button(master=bottom_frame, text='Save List',
+                        command=saveList, relief='raised',
+                        fg='dark green', font=('Garamond',16,'bold'))
+    save_button.pack(side='left', expand=True)
+    bottom_frame.pack(side='bottom')
+    
+    window_display.mainloop()
+
 def initializeUI():
     """ Initialize the user interface"""
     
@@ -258,11 +340,11 @@ def initializeUI():
     title = tk.Label(master=frame_title, text='The GOAT Movie Recommendation', bg='white',
                     font=('Garamond',36,'bold'), fg='steel blue')
     title.pack(side='top')
-    title_info = tk.Label(master=frame_title, text='Brought to you by: Christian Newton and Reid Smith', bg='white',
-                    font=('Garamond',16,'bold'), fg='black')
+    title_info = tk.Label(master=frame_title, text='Brought to you by: Christian Newton and Reid Smith',
+                    bg='white', font=('Garamond',16,'bold'), fg='black')
     title_info.pack(side='top')
-    title_info2 = tk.Label(master=frame_title, text='Sponsored by: Philip Caplan, Esq.', bg='white',
-                    font=('Garamond',12), fg='gray')
+    title_info2 = tk.Label(master=frame_title, text='Sponsored by: Philip Caplan, Esq.',
+                    bg='white', font=('Garamond',12), fg='gray')
     title_info2.pack(side='top')
     frame_title.pack(side='top')
     
@@ -288,7 +370,7 @@ def initializeUI():
     bottom_frame.pack(side='bottom', expand=True)
     
     window.mainloop()
-    
+
 def mainUI():
     """ Create the layout for the main user interface"""
 
@@ -297,7 +379,7 @@ def mainUI():
     # genres 
     frame_genre = tk.Frame(master=window, width=600, height=800,
                       bg='white')
-    head_genre = tk.Label(master=frame_genre, text='Genre(s):', bg='white',
+    head_genre = tk.Label(master=frame_genre, text='Genres:', bg='white',
                     font=('Garamond',30,'bold'), fg='blue')
     info_genre = tk.Label(master=frame_genre, text='Select 1 or more of the listed genres.',
                     bg='white', font=('Garamond',14), fg='black')
@@ -321,6 +403,7 @@ def mainUI():
                        font=('Garamond',16), fg=genre_colors[i%8],
                     command=partial(addGenre, db_genres[i]), relief='raised', bg='white')
         button_genre.pack(side='top')
+    # relief: flat, groove, raised, ridge, solid, sunken
     
     frame_genre.pack(side='top',expand=True)
     
@@ -353,7 +436,7 @@ def mainUI():
     for i in range(91):
         option_list.append(str(i+start))
 
-    year_menu1 = tk.OptionMenu(start_frame, year_start_var, *option_list)
+    year_menu1 = tk.OptionMenu(start_frame, year_start_var, *option_list,)
     year_menu1.pack(side='left')    
     year_start_var.trace("w", callbackS)    
     start_frame.pack(side='left')
@@ -388,9 +471,9 @@ def mainUI():
     info_rating2 = tk.Label(master=frame_rating,
                 text='Enter numbers between 1 and 10 for the lower and upper \n bounds of crowd-sourced ratings.',
                 bg='white', font=('Garamond',14), fg='black')
-    head_rating.pack(side='top', expand=False)
-    info_rating1.pack(side='top', expand=False)
-    info_rating2.pack(side='top', expand=False)
+    head_rating.pack(side='top')
+    info_rating1.pack(side='top')
+    info_rating2.pack(side='top')
     
     # lower rating entry
     lower_frame = tk.Frame(master=frame_rating, bg='white')
@@ -408,7 +491,7 @@ def mainUI():
     lower_entry.pack(side='left')
     lower_frame.pack(side='left')
     
-    # upperlower rating entry
+    # upper rating entry
     upper_frame = tk.Frame(master=frame_rating, bg='white')
     upper_label = tk.Label(master=upper_frame, text='Upper:', bg='white',
                     font=('Garamond',20,'bold'), fg='black')
@@ -440,22 +523,21 @@ def mainUI():
                        fg='black', font=('Garamond',14,'bold'))
     info_button.pack(side='left')
     
-    # advanced preferences button, load extra data if it has
-    # not been loaded on a previous search
-    if not d_values:
-        advanced = tk.Button(master=bottom_frame, text='Advanced',
-                command=lambda:[openSheet2(), advancedPref()], relief='raised',
-                fg='blue', font=('Garamond',14,'bold'))
-        
-    else:
-        advanced = tk.Button(master=bottom_frame, text='Advanced',
-                command=advancedPref, relief='raised',
-                fg='blue', font=('Garamond',14,'bold'))
-        
+    # view list button
+    view_list = tk.Button(master=bottom_frame, text='View List',
+                         command=userList, relief='raised',
+                       fg='dark green', font=('Garamond',14,'bold'))
+    view_list.pack(side='left')
+    
+    # advanced preferences button
+    advanced = tk.Button(master=bottom_frame, text='Advanced',
+                         command=advancedPref, relief='raised',
+                       fg='blue', font=('Garamond',14,'bold'))
     advanced.pack(side='left')
+    
     bottom_frame.pack(side='bottom')
     
-    # how to set the background for the whole window (CHANGE)
+    # how to set the background for the whole window
     window.configure(bg='white')
     window.mainloop()
     
@@ -475,7 +557,7 @@ def createList():
             cap = [w.capitalize() for w in mov_words]
             title = ' '.join(cap)
             final_movies.append(title)
-        
+    
 #     print(genres)
 #     print(year_start, year_end)
 #     print(lower, upper)
@@ -499,18 +581,22 @@ def createList():
     corr_file = open('correlation.pickle', 'rb')
     corr_dict = pickle.load(corr_file)
     corr_file.close()
-    #print(corr_dict[('Comedy', 'Drama')])
 
     # calculate genre correlations for each movie and give
     # each movie a unique key to later perform sort operations
     corr_subset = {}
     count = 0
+    
+    # use the maximum correlation value for matching genres
+    max_corrval = 2 * max(corr_dict.values())
     for movie in year_subset:
         movie_genres = movie[2][0]
         search_genres = movie_genres.split(',')
         corr_val = 0
         local_genres = genres.copy()
         alpha = 1
+        
+        # paired genre correlation
         for movie_gen in search_genres:   
             for gen in local_genres:
                 test_1 = (movie_gen, gen)
@@ -518,13 +604,46 @@ def createList():
                 if movie_gen == gen:
                     
                     # decreases when multiple genres match
-                    corr_val += 0.75 / alpha
+                    corr_val += max_corrval / alpha
                     alpha += 1
                 elif test_1 in corr_dict:
                     corr_val += corr_dict[test_1]
                 elif test_2 in corr_dict:
                     corr_val += corr_dict[test_2]
         
+        # triple genre correlation with two from database
+        if len(search_genres) == 2:
+            g1 = search_genres[0]
+            g2 = search_genres[1]
+            for gen in local_genres:
+                
+                # permute all possible keys
+                perm_twogen = list(permutations([g1,g2,gen]))
+                for perm in perm_twogen:
+                    if perm in corr_dict:
+                        corr_val += corr_dict[perm]
+        
+        # triple genre correlation with three from database
+        if len(search_genres) == 3:
+            g1 = search_genres[0]
+            g2 = search_genres[1]
+            g3 = search_genres[2]
+            
+            # permute all possible keys
+            for gen in local_genres:
+                perm_threegen_1 = list(permutations([g1,g2,gen]))
+                perm_threegen_2 = list(permutations([g1,g3,gen]))
+                perm_threegen_3 = list(permutations([g2,g3,gen]))
+                for perm in perm_threegen_1:
+                    if perm in corr_dict:
+                        corr_val += corr_dict[perm]
+                for perm in perm_threegen_2:
+                    if perm in corr_dict:
+                        corr_val += corr_dict[perm]
+                for perm in perm_threegen_3:
+                    if perm in corr_dict:
+                        corr_val += corr_dict[perm]
+                             
         # append correlation value to the end of list
         corr_val = round(corr_val, 6)
         movie.append(corr_val)
@@ -537,9 +656,13 @@ def createList():
     # sort dictionary based on rating
     rating_sorted = sorted(corr_subset.items(), key=lambda item: item[1][3], reverse=True)
     
-    # guarantee 20 items are taken, intersection of lists
+    # take one random element from rating and add to final
     real_values = []
-    total = 0
+    total = 1
+    mid_rank = random.choice(rating_sorted)
+    real_values.append(mid_rank[1])
+    
+    # guarantee 20 items are taken, intersection of lists
     corr_count = 0
     rating_count = 0
     
@@ -551,9 +674,9 @@ def createList():
         max_total = 20
     if max_corr >= 15:
         max_corr = 15
-    if max_rating >= 5:
-        max_rating = 5
-    
+    if max_rating >= 4:
+        max_rating = 4
+        
     while total < max_total:
         
         # ensure a balance of correlation to rating
@@ -592,13 +715,15 @@ def createList():
     # shuffle final list to create nuanced feel for user
     random.shuffle(real_values)
     
-    # display separate lists for each genre (CHANGE)
+    # set up display
     window_display = tk.Tk()
-    text_box = tk.Text(master=window_display, wrap='none',
-                           font=('Garamond', 12))
+    top_frame = tk.Frame(master=window_display, bg='white')
+    text_frame = tk.Frame(master=top_frame, bg='white')
+    text_box = tk.Text(master=text_frame, wrap='none', height=40,
+                           font=('Garamond', 14))
     
-    # user did submit preferences
-    # FIGURE OUT GOOD WAY TO DISPLAY
+    # user did submit preferences, FIGURE OUT GOOD WAY TO DISPLAY
+    user_frame = tk.Frame(master=top_frame, bg='white')
     if real_values and genres:
         entry_num = len(real_values) - 1
         for i in range(len(real_values)):
@@ -609,36 +734,53 @@ def createList():
             corr = real_values[row][4]
             corr_val = round(corr, 6)
             label_num = row + 1
+            
+            # add button for each movie
+            button_movie = tk.Button(master=user_frame, text='+',
+                       font=('Garamond',16,'bold'), fg='dark green', height=1, width=4,
+                    command=partial(addMovie, real_values[row]), relief='raised')
+            button_movie.pack(side='top')
+            
             text_box.insert(1.0, str(label_num) + '. ' + str(name_val)
                             + ': ' + str(year_val) + ': ' + str(genres_val) +
-                            ':' + str(corr_val) + '\n')
+                            ': ' + str(corr_val) + '\n\n')
         text_box.pack(side='top')
-        text_box.insert(1.0, 'Title: Year: Genres: Correlation Values' + '\n\n')
+        user_frame.pack(side='right')
     
     # force user to select genres to generate a movie list
     else:
         text_box.insert(1.0, 'No data found.')
         text_box.pack(side='top')
-    
+    text_frame.pack(side='left')
+    top_frame.pack(side='top')
+        
     # search again button
-    button = tk.Button(text='Search Again',
-                        command=subsequent,
+    bottom_frame = tk.Frame(master=window_display, bg='gray')
+    search_button = tk.Button(master=bottom_frame, text='Search Again',
+                        command=lambda:[window_display.destroy(), subsequent()],
                        relief='raised', fg='blue', font=('Garamond',16,'bold'))
-    button.pack(side='right', expand=True)
+    search_button.pack(side='right', expand=True)
     
     # close current button
-    button = tk.Button(text='Exit Search',
+    exit_button = tk.Button(master=bottom_frame, text='Exit Search',
                         command=window_display.destroy,
                        relief='raised', fg='red', font=('Garamond',16,'bold'))
-    button.pack(side='left', expand=True)
+    exit_button.pack(side='left', expand=True)
+        
+    # save list button
+    save_button = tk.Button(master=bottom_frame, text='Save List',
+                        command=lambda:[saveList(real_values)],
+                       relief='raised', fg='dark green', font=('Garamond',16,'bold'))
+    save_button.pack(side='left', expand=True)
+    bottom_frame.pack(side='bottom')
     
     window_display.mainloop()
 
 def first():
-    """Runs the process of manufacturing a list from a user's
+    """Starts the process of manufacturing a list from a user's
     inputted preferences."""
     
-    # initialize the UI to show the title screen
+    # initialize the UI for the first search
     initializeUI()
     
     # obtain a curated list of movies and displays, also gives
@@ -663,6 +805,9 @@ def subsequent():
     lower = 0
     global upper
     upper = 10
+    
+    global fav_movies
+    fav_movies = ''
   
     # do not go back to the main screen for subsequent runs
     mainUI()
