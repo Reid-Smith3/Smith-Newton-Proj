@@ -122,7 +122,9 @@ def openSheet2():
     
     d_values = result_director.get('values', [])
     w_values = result_writer.get('values', [])
-
+    
+#     print('Sheet 2 Loaded')
+    
 def addGenre(button):
     """Add genres from each clicked button to the genre list"""
     genres.append(button)
@@ -266,7 +268,7 @@ def advancedPref():
     preferences.mainloop()
     
 def userList():
-    """ Create the list for the user"""
+    """ Create the watch later list for the user"""
     
     # set up display
     window_display = tk.Tk()
@@ -274,46 +276,41 @@ def userList():
     top_frame = tk.Frame(master=window_display, bg='white')
     text_frame = tk.Frame(master=top_frame, bg='white')
     
-    # scale to length of list
-    if user_list:
-        user_length = len(user_list)
-        scale = 20 / user_length
-        height_var = 40 / scale
-    else:
-        height_var = 5
-    text_box = tk.Text(master=text_frame, wrap='none',
-                       height=height_var, font=('Garamond', 14))
-    
     # user did submit preferences, FIGURE OUT GOOD WAY TO DISPLAY
-    user_frame = tk.Frame(master=top_frame, bg='white', height=40)
     if user_list:
-        entry_num = user_length - 1
-        for i in range(user_length):
-            row = entry_num - i
-            name_val = user_list[row][0]
-            year_val = user_list[row][1]
-            genres_val = user_list[row][2]
-            corr = user_list[row][4]
+        
+        # iterate through items in list, create label
+        # and button for each
+        for i in range(len(user_list)):
+            name_val = user_list[i][0]
+            year_val = user_list[i][1]
+            genres_val = user_list[i][2]
+            corr = user_list[i][4]
             corr_val = round(corr, 6)
-            label_num = row + 1
+            label_num = i + 1
+            
+            # add text label for movie
+            label_frame = tk.Frame(master=text_frame, bg='white', width=70)
+            text_label = tk.Label(master=label_frame, text=str(label_num) + '. '
+                            + str(name_val) + ': ' + str(year_val) + ': ' +
+                            str(genres_val) + ': ' + str(corr_val) + '\n',
+                            font=('Garamond', 14), bg='white',
+                            anchor='w', width=66)
+            text_label.pack(side='left')
             
             # add button for each movie
-            button_movie = tk.Button(master=user_frame, text='-',
+            button_movie = tk.Button(master=label_frame, text='-',
                        font=('Garamond',16,'bold'), fg='red3', height=1, width=4,
                     command=partial(removeMovie, user_list[i]), relief='raised')
-            button_movie.pack()
-            
-            text_box.insert(1.0, str(label_num) + '. ' + str(name_val)
-                            + ': ' + str(year_val) + ': ' + str(genres_val) +
-                            ': ' + str(corr_val) + '\n\n')
-        text_box.pack(side='top')
-        user_frame.pack(side='right')
+            button_movie.pack(side='left')
+            label_frame.pack(side='top')
     
     # force user to select genres to generate a movie list
     else:
-        text_box.insert(1.0, 'No data found.')
-        text_box.pack(side='top')
-    text_frame.pack(side='left')
+        text_label = tk.Label(master=text_frame, text='No movies in watch later.',
+                            bg='white', font=('Garamond',14))
+        text_label.pack()
+    text_frame.pack(side='top')
     top_frame.pack(side='top')
         
     # search again button
@@ -538,9 +535,9 @@ def mainUI():
                        fg='dark green', font=('Garamond',14,'bold'))
     view_list.pack(side='left')
     
-    # advanced preferences button
+    # advanced preferences button, load next set of data
     advanced = tk.Button(master=bottom_frame, text='Advanced',
-                         command=advancedPref, relief='raised',
+                         command=lambda:[openSheet2(), advancedPref()], relief='raised',
                        fg='blue', font=('Garamond',14,'bold'))
     advanced.pack(side='left')
     
@@ -763,45 +760,46 @@ def createList():
     
     # set up display
     window_display = tk.Tk()
+    window_display.configure(bg='white')
     top_frame = tk.Frame(master=window_display, bg='white')
     text_frame = tk.Frame(master=top_frame, bg='white')
-    if real_values:
-        height_var = 40
-    else:
-        height_var = 5
-    text_box = tk.Text(master=text_frame, wrap='none',
-                       height=height_var, font=('Garamond', 14))
     
     # user did submit preferences, FIGURE OUT GOOD WAY TO DISPLAY
-    user_frame = tk.Frame(master=top_frame, bg='white')
     if real_values and genres:
-        entry_num = len(real_values) - 1
+
+        # iterate through items in list, create label
+        # and button for each
         for i in range(len(real_values)):
-            row = entry_num - i
-            name_val = real_values[row][0]
-            year_val = real_values[row][1]
-            genres_val = real_values[row][2]
-            corr = real_values[row][4]
+            name_val = real_values[i][0]
+            year_val = real_values[i][1]
+            genres_val = real_values[i][2]
+            corr = real_values[i][4]
             corr_val = round(corr, 6)
-            label_num = row + 1
+            label_num = i + 1
+            
+            # add text label for movie
+            label_frame = tk.Frame(master=text_frame, bg='white', width=70)
+            text_label = tk.Label(master=label_frame, text=str(label_num) + '. '
+                            + str(name_val) + ': ' + str(year_val) + ': ' +
+                            str(genres_val) + ': ' + str(corr_val) + '\n',
+                            font=('Garamond', 14), bg='white',
+                            anchor='w', width=66)
+            text_label.pack(side='left')
             
             # add button for each movie
-            button_movie = tk.Button(master=user_frame, text='+',
+            button_movie = tk.Button(master=label_frame, text='+',
                        font=('Garamond',16,'bold'), fg='dark green', height=1, width=4,
                     command=partial(addMovie, real_values[i]), relief='raised')
             button_movie.pack(side='top')
-            
-            text_box.insert(1.0, str(label_num) + '. ' + str(name_val)
-                            + ': ' + str(year_val) + ': ' + str(genres_val) +
-                            ': ' + str(corr_val) + '\n\n')
-        text_box.pack(side='top')
-        user_frame.pack(side='right')
+            label_frame.pack(side='top')
+
     
     # force user to select genres to generate a movie list
     else:
-        text_box.insert(1.0, 'No data found.')
-        text_box.pack(side='top')
-    text_frame.pack(side='left')
+        text_label = tk.Label(master=text_frame, text='No movies found.',
+                            bg='white', font=('Garamond',14))
+        text_label.pack()
+    text_frame.pack(side='top')
     top_frame.pack(side='top')
         
     # search again button
