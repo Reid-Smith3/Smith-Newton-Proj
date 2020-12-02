@@ -683,61 +683,106 @@ def createList():
     mid_rank = random.choice(rating_sorted)
     real_values.append(mid_rank[1])
     
-    # guarantee 20 items are taken, intersection of lists
-    corr_count = 0
-    rating_count = 0
-    
-    # if less than 20, 15, or 5 available, set max
-    max_corr = len(corr_sorted)
-    max_rating = len(rating_sorted)
-    max_total = max_corr + max_rating
-    if max_total >= 20:
-        max_total = 20
-    if max_corr >= 15:
-        max_corr = 15
-    if max_rating >= 4:
-        max_rating = 4
-        
     # get an even spread of years
     year_range = year_end - year_start
     half_decades = year_range // 5
     if half_decades == 0:
         half_decades = 1
 
-    decade_sorted = corr_sorted.copy()
-    temp_sorted = corr_sorted.copy()
-    final_sorted = []
+    # find the top values from each five year period
+    # within the user selected range of years
+    halfd_sorted = year_sorted.copy()
+    temp_sorted = year_sorted.copy()
+    year_corr = []
+    
+    # establish a cutoff for the top values
+    cut_val = max_corrsort / 10
+    year_begin = halfd_sorted[0][1][1]
     for i in range(half_decades):
-        year_maxcorr = decade_sorted[0][1][1]
-        max_corrsort = decade_sorted[0][1][4]
         half_list = []
-        for sort in decade_sorted:
-            if sort[1][1] - 5 > year_maxcorr:
+        
+        # iterate through all movies currently in list
+        for sort in halfd_sorted:
+            if sort[1][1] - 5 < year_begin:
+                if sort[1][4] + cut_val >= max_corrsort:
+                    half_list.append(sort)
+                    
+            # move onto next period
+            else:
+                year_begin += 5
                 break
-            if sort[1][4] + 0.05 >= max_corrsort and sort[1][1] - 5 <= year_maxcorr:
-                half_list.append(sort)
             temp_sorted.pop(0)
-        decade_sorted = temp_sorted
-        final_sorted.append(half_list)
+        halfd_sorted = temp_sorted.copy()
+        year_corr.append(half_list)
+    
+    # if less than 20, 15, or 5 available, set max
+    max_corr = len(corr_sorted)
+    max_rating = len(rating_sorted)
+    max_total = max_corr + max_rating
+    if max_total >= 15:
+        max_total = 15
+    if max_corr >= 10:
+        max_corr = 10
+    if max_rating >= 4:
+        max_rating = 4
+        
+    # how many movies to take from each year range
+    # when there are fewer year ranges than movies taken
+    corr_cycle = max_corr // half_decades
+    index_count = 0
+    
+    # guarantee 20 items are taken, intersection of lists
+    corr_count = 0
+    rating_count = 0
                 
     while total < max_total:
         
-        # ensure a balance of correlation to rating
-        if corr_count < max_corr: 
-            corr_id = corr_sorted[0][0]
-            corr_match = False
-            for title in real_values:
-                if title[0] == corr_id:
-                    corr_match = True
-                    corr_sorted.pop(0)
+        # ensure a balance of correlation to ratings
+        if corr_count < max_corr:
+            if half_decades <= max_corr:
+                
+                for i in range(corr_cycle):
+                    corr_extract = random.choice(year_corr[index_count])
+                    corr_id = corr_extract[0]
+                    corr_match = False
+                    for title in real_values:
+                        if title[0] == corr_id:
+                            corr_match = True
+                            ind = year_corr[index_count].index(corr_extract)
+                            year_corr[index_count].pop(ind)
                     
-            if not corr_match:
-                real_values.append(corr_sorted[0][1])
-                corr_sorted.pop(0)
-                corr_count += 1
-                total += 1
+                    if not corr_match:
+                        real_values.append(corr_extract[1])
+                        ind = year_corr[index_count].index(corr_extract)
+                        year_corr[index_count].pop(ind)
+                        corr_count += 1
+                        total += 1
+                        
+                        if corr_count == max_corr or total == max_total:
+                            break
+                    
+                index_count += 1
+                if index_count == half_decades:
+                    index_count = 0
+                    
+            else:
+                corr_cyclelist = [ind for ind in range(len(year_corr))]
+                random_index = random.choice(corr_cyclelist)
+                corr_extract = random.choice(year_corr[random_index])
+                corr_id = corr_extract[0]
+                corr_match = False
+                for title in real_values:
+                    if title[0] == corr_id:
+                        corr_match = True
+                        year_corr.pop(random_index)
+                        
+                if not corr_match:
+                    real_values.append(corr_extract[1])
+                    year_corr.pop(random_index)
+                    corr_count += 1
+                    total += 1
             
-        if total == 20:
+        if total == max_total:
             break
         
         # ensure a balance of rating to correlation
