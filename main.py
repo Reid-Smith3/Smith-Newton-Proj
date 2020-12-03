@@ -37,6 +37,7 @@ upper_var = ''
 fav_movies = ''
 fav_movies_var = ''
 user_list = []
+dive = False
 
 # initializing the global variables for the data
 g_values = ''
