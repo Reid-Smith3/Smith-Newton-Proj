@@ -27,7 +27,7 @@ writer_range = 'G2:G158548'
 # initializing the global variables for the UI
 genres = []
 year_start = 1930
-year_end = 2020
+year_end = 2010
 year_start_var = ''
 year_end_var = ''
 lower = 0
