@@ -144,6 +144,15 @@ def removeMovie(button):
     """Add movies from each clicked button to the user list"""
     bad = user_list.index(button)
     user_list.pop(bad)
+    
+def deepDive(choice):
+    """ Changes whether the user sees more top rated
+    movies from genre correlations or lesser known movies"""
+    global dive
+    if choice:
+        dive = True
+    else:
+        dive = False
 
 def callbackS(*args):
     """Detect a change in the year start variable"""
@@ -236,6 +245,30 @@ def advancedPref():
     
     preferences = tk.Tk()
     preferences.configure(bg='white')
+    
+    # deep dive frame
+    deep_frame = tk.Frame(master=preferences, bg='white')
+    deep_title = tk.Label(master=deep_frame, bg='white',
+                          text='Deep Dive:', font=('Garamond',30,'bold'),
+                          fg='blue')
+    deep_title.pack(side='top')
+    deep_info = tk.Label(master=deep_frame, bg='white',
+                        text='Select top picks for popular movies, \n and select deep dive for lesser known movies.',
+                          font=('Garamond',14))
+    deep_info.pack(side='top')
+    
+    deep_bframe = tk.Frame(master=deep_frame, bg='white')
+
+    deep_button = tk.Button(master=deep_bframe, text='Deep Dive', bg='white',
+                         command=lambda:[deepDive(True)], relief='raised',
+                       fg='dark blue', font=('Garamond',14,'bold'))
+    deep_button.pack(side='left')
+    top_button = tk.Button(master=deep_bframe, text='Top Picks', bg='white',
+                         command=lambda:[deepDive(False)], relief='raised',
+                       fg='slate gray', font=('Garamond',14,'bold'))
+    top_button.pack(side='right')
+    deep_bframe.pack(side='bottom')
+    deep_frame.pack(side='top')
     
     # enter a favorite movie
     frame_movie = tk.Frame(master=preferences, bg='white')
@@ -692,11 +725,13 @@ def createList():
             
             # scale to give better chance of being included
             # in final list to less popular movies
-#             if rate[1][4] >= 100:
-#                 scale = 10 ** len(str(rate[1][4])) // 3
-#             else:
-#                 scale = 10 ** (len(str(rate[1][4])) // 3 + 1)
-#             rate[1][4] = rate[1][4] / scale
+            if dive:
+                if rate[1][4] >= 100:
+                    scale = 10 ** len(str(rate[1][4])) // 3
+                else:
+                    scale = 10 ** (len(str(rate[1][4])) // 3 + 1)
+                rate[1][4] = rate[1][4] / scale
+                
             rating_votes += rate[1][4]
             rating_subset.append(rate)
     
@@ -764,19 +799,22 @@ def createList():
                 break
             temp_sorted.pop(0)
             
+        # if user wants lesser known movies
+        if dive:
+            new_votes = 0
+            for select in part:
+                average = votes // len(part)
+                if select[1][4] >= average:
+                    scale = 10 ** len(str(select[1][4])) // len(str(average))
+                else:
+                    scale = 10 ** (len(str(select[1][4])) // len(str(average)) + 1)
+                select[1][4] = select[1][4] / scale
+                new_votes += select[1][4]
+            votes = new_votes
+            
         # take popularity of each movie and translate
         # to weights for chance of being selected
         weight_part = []
-#         new_votes = 0
-#         for select in part:
-#             average = votes // len(part)
-#             if select[1][4] >= average:
-#                 scale = 10 ** len(str(select[1][4])) // len(str(average))
-#             else:
-#                 scale = 10 ** (len(str(select[1][4])) // len(str(average)) + 1)
-#             select[1][4] = select[1][4] / scale
-#             new_votes += select[1][4]
-#             
         for select in part:
             weight = (select[1][4] / votes) * 100
             weight_part.append(weight)
@@ -994,6 +1032,9 @@ def subsequent():
     
     global fav_movies
     fav_movies = ''
+    
+    global dive
+    dive = False
   
     # do not go back to the main screen for subsequent runs
     mainUI()
@@ -1002,3 +1043,4 @@ def subsequent():
     
 if __name__ == '__main__':
     first()
+
