@@ -18,6 +18,7 @@ name_range = 'B2:B158548'
 year_range = 'C2:C158548'
 genre_range = 'E2:E158548'
 rating_range = 'H2:H158548'
+votes_range = 'I2:I158548'
 
 # ranges for additional access
 director_range = 'F2:F158548'
@@ -42,6 +43,7 @@ g_values = ''
 y_values = ''
 n_values = ''
 r_values = ''
+v_values = ''
 d_values = ''
 w_values = ''
 
@@ -85,6 +87,8 @@ def openSheet():
                                 range=year_range).execute()
     result_ratings = sheet.values().get(spreadsheetId=MOVIES_SPREADSHEET_ID,
                                 range=rating_range).execute()
+    result_votes = sheet.values().get(spreadsheetId=MOVIES_SPREADSHEET_ID,
+                                range=votes_range).execute()
     
     # modify global variables to avoid parameter passing
     # and ensure modification for future searches
@@ -92,12 +96,14 @@ def openSheet():
     global n_values
     global y_values
     global r_values
+    global v_values
     
     # get the actual values for each call
     g_values = result_genre.get('values', [])
     n_values = result_name.get('values', [])
     y_values = result_year.get('values', [])
     r_values = result_ratings.get('values', [])
+    v_values = result_votes.get('values', [])
     
     # load from local file
 #     movie_file = open('moviedata.pickle', 'rb')
@@ -124,7 +130,7 @@ def openSheet2():
     w_values = result_writer.get('values', [])
     
 #     print('Sheet 2 Loaded')
-    
+
 def addGenre(button):
     """Add genres from each clicked button to the genre list"""
     genres.append(button)
@@ -190,7 +196,7 @@ def saveList(passed_list=user_list):
     """ Saves the user generated list to a local file"""
     save_file = open('savedlist.txt', 'w')
     for movie in passed_list:
-        save_file.write('%s\n' % movie)
+        save_file.write('%s\n' % movie[1])
     
 def info():
     """ Creates a separate UI detailing information about the
@@ -282,10 +288,10 @@ def userList():
         # iterate through items in list, create label
         # and button for each
         for i in range(len(user_list)):
-            name_val = user_list[i][0]
-            year_val = user_list[i][1]
-            genres_val = user_list[i][2]
-            corr = user_list[i][4]
+            name_val = user_list[i][1][0]
+            year_val = user_list[i][1][1]
+            genres_val = user_list[i][1][2]
+            corr = user_list[i][1][5]
             corr_val = round(corr, 6)
             label_num = i + 1
             
@@ -395,18 +401,18 @@ def mainUI():
     # create all available genre buttons for user to select from
     db_genres = ['Horror','Comedy','Romance','Sci-Fi', 'Drama',
                  'Action','Adventure','Crime','War','Biography',
-                 'Musical','Fantasy','Western','Thriller','Documentary',
-                 'Film-Noir']
-    genre_colors = ['IndianRed4','steel blue','purple4','slate gray','blue4',
-                    'red3','dark green','DarkOrange2']
+                 'Musical','Fantasy','Western','Thriller','Animation',
+                 'Film-Noir','Sport','Family','Documentary','History']
+    genre_colors = ['IndianRed4','steel blue','DeepPink3','slate gray','SpringGreen3',
+                    'blue4','red3','DarkOrange2','dark green','purple4']
     
     for i in range(len(db_genres)):
-        if i % 4 == 0:
+        if i % 5 == 0:
             button_frame = tk.Frame(master=frame_genre, bg='white')
-        elif i % 4 == 3:
+        elif i % 5 == 4:
             button_frame.pack(side='left')
         button_genre = tk.Button(master=button_frame, text=db_genres[i],
-                       font=('Garamond',16), fg=genre_colors[i%8],
+                       font=('Garamond',16), fg=genre_colors[i%10],
                     command=partial(addGenre, db_genres[i]), relief='raised', bg='white')
         button_genre.pack(side='top')
     # relief: flat, groove, raised, ridge, solid, sunken
@@ -535,9 +541,9 @@ def mainUI():
                        fg='dark green', font=('Garamond',14,'bold'))
     view_list.pack(side='left')
     
-    # advanced preferences button, load next set of data
+    # advanced preferences button
     advanced = tk.Button(master=bottom_frame, text='Advanced',
-                         command=lambda:[openSheet2(), advancedPref()], relief='raised',
+                         command=advancedPref, relief='raised',
                        fg='blue', font=('Garamond',14,'bold'))
     advanced.pack(side='left')
     
@@ -580,7 +586,8 @@ def createList():
             if (yr >= year_start and yr <= year_end) and (rating >= lower and rating <= upper):
                 local_genres = g_values[count]
                 name = n_values[count][0]
-                year_subset.append([name, yr, local_genres, rating])
+                votes = int(v_values[count][0])
+                year_subset.append([name, yr, local_genres, rating, votes])
         count += 1
             
     # load pre-processed correlation dictionary
@@ -594,7 +601,7 @@ def createList():
     count = 0
     
     # use the maximum correlation value for matching genres
-    max_corrval = 1.5 * max(corr_dict.values())
+    max_corrval = 1.25 * max(corr_dict.values())
     for movie in year_subset:
         movie_genres = movie[2][0]
         search_genres = movie_genres.split(',')
@@ -635,10 +642,11 @@ def createList():
             
             # permute all possible keys
             for gen in local_genres:
-                perm_twogen = list(permutations([g1,g2,gen]))
-                for perm in perm_twogen:
-                    if perm in corr_dict:
-                        corr_val += corr_dict[perm] / delta
+                triple = (g1,g2,gen)
+                triple_key = tuple(sorted(triple))
+                if triple_key in corr_dict:
+                    add_val = corr_dict[triple_key] / delta
+                    corr_val += add_val
         
         # triple genre correlation with three from database
         if beta == 3:
@@ -651,18 +659,17 @@ def createList():
             
             # permute all possible keys
             for gen in local_genres:
-                perm_threegen_1 = list(permutations([g1,g2,gen]))
-                perm_threegen_2 = list(permutations([g1,g3,gen]))
-                perm_threegen_3 = list(permutations([g2,g3,gen]))
-                for perm in perm_threegen_1:
-                    if perm in corr_dict:
-                        corr_val += corr_dict[perm] / delta
-                for perm in perm_threegen_2:
-                    if perm in corr_dict:
-                        corr_val += corr_dict[perm] / delta
-                for perm in perm_threegen_3:
-                    if perm in corr_dict:
-                        corr_val += corr_dict[perm] / delta
+                triple_1 = (g1,g2,gen)
+                triple_2 = (g1,g3,gen)
+                triple_3 = (g2,g3,gen)
+                triple_list = [triple_1, triple_2, triple_3]
+                
+                # search for 3 possible keys, sorted alphabetically
+                for i in range(3):
+                    triple_key = tuple(sorted(triple_list[i]))
+                    if triple_key in corr_dict:
+                        add_val = corr_dict[triple_key] / delta
+                        corr_val += add_val
                              
         # scale final correlation value by alpha and beta
         corr_val = alpha * corr_val / beta
@@ -671,132 +678,218 @@ def createList():
         corr_subset[count] = movie
         count += 1
     
-    # sort dictionary based on correlation value
-    corr_sorted = sorted(corr_subset.items(), key=lambda item: item[1][4], reverse=True)
-    
     # sort dictionary based on rating
     rating_sorted = sorted(corr_subset.items(), key=lambda item: item[1][3], reverse=True)
+    
+    # preprocess top ratings by weighting by user votes
+    rating_votes = 0
+    rating_subset = []
+    top_rating = rating_sorted[0][1][3]
+    for rate in rating_sorted:
+        
+        # take only if within 1 of top rating
+        if rate[1][3] + 1 >= top_rating:
+            
+            # scale to give better chance of being included
+            # in final list to less popular movies
+#             if rate[1][4] >= 100:
+#                 scale = 10 ** len(str(rate[1][4])) // 3
+#             else:
+#                 scale = 10 ** (len(str(rate[1][4])) // 3 + 1)
+#             rate[1][4] = rate[1][4] / scale
+            rating_votes += rate[1][4]
+            rating_subset.append(rate)
+    
+    # set weights for rating subset
+    weight_ratings = []
+    for rate in rating_subset:
+        weight = (rate[1][4] / rating_votes) * 100
+        weight_ratings.append(weight)
+    
+    # sort dictionary based on year
+    year_sorted = sorted(corr_subset.items(), key=lambda item: item[1][1])
     
     # take one random element from rating and add to final
     real_values = []
     total = 1
     mid_rank = random.choice(rating_sorted)
-    real_values.append(mid_rank[1])
+    real_values.append(mid_rank)
     
     # get an even spread of years
     year_range = year_end - year_start
-    half_decades = year_range // 5
-    if half_decades == 0:
-        half_decades = 1
-
+    if year_range < 10:
+        partition = 1
+        partition_num = year_range + 1
+    else:
+        partition = (year_range // 10) + 1
+        partition_num = (year_range // partition) + 1
+    
     # find the top values from each five year period
     # within the user selected range of years
     halfd_sorted = year_sorted.copy()
     temp_sorted = year_sorted.copy()
     year_corr = []
+    weight_votes = []
+    
+    # find maximum correlation value for movies in subset
+    max_corrsort = max(corr_subset.values(), key=lambda item: item[5])
+    max_corrsort = max_corrsort[5]
+    num_corr = 0
     
     # establish a cutoff for the top values
-    cut_val = max_corrsort / 10
-    year_begin = halfd_sorted[0][1][1]
-    for i in range(half_decades):
-        half_list = []
+    cut_val = max_corrsort / 8
+    year_begin = year_sorted[0][1][1]
+    for i in range(partition_num):
+        part = []
+        votes = 0
         
         # iterate through all movies currently in list
         for sort in halfd_sorted:
-            if sort[1][1] - 5 < year_begin:
-                if sort[1][4] + cut_val >= max_corrsort:
-                    half_list.append(sort)
+            if sort[1][1] - partition < year_begin:
+                if sort[1][5] + cut_val >= max_corrsort:
+                    part.append(sort)
+                    
+                    # scale votes for correlation
+#                     if sort[1][4] >= 100:
+#                         scale = 10 ** len(str(sort[1][4])) // 5
+#                     else:
+#                         scale = 10 ** (len(str(sort[1][4])) // 5 + 1)
+#                     sort[1][4] = sort[1][4] / scale
+                    votes += sort[1][4]
+                    num_corr += 1
                     
             # move onto next period
             else:
-                year_begin += 5
+                year_begin += partition
                 break
             temp_sorted.pop(0)
+            
+        # take popularity of each movie and translate
+        # to weights for chance of being selected
+        weight_part = []
+#         new_votes = 0
+#         for select in part:
+#             average = votes // len(part)
+#             if select[1][4] >= average:
+#                 scale = 10 ** len(str(select[1][4])) // len(str(average))
+#             else:
+#                 scale = 10 ** (len(str(select[1][4])) // len(str(average)) + 1)
+#             select[1][4] = select[1][4] / scale
+#             new_votes += select[1][4]
+#             
+        for select in part:
+            weight = (select[1][4] / votes) * 100
+            weight_part.append(weight)
+            
+        # update arrays
         halfd_sorted = temp_sorted.copy()
-        year_corr.append(half_list)
-    
-    # if less than 20, 15, or 5 available, set max
-    max_corr = len(corr_sorted)
+        
+        # add if non empty
+        if part:
+            year_corr.append(part)
+            weight_votes.append(weight_part)
+        else:
+            partition_num -= 1
+        
+    # if less than 15, 10, or 5 available, set max
+    max_corr = num_corr
     max_rating = len(rating_sorted)
     max_total = max_corr + max_rating
     if max_total >= 15:
         max_total = 15
-    if max_corr >= 10:
+    if max_corr >= 10 and max_rating >= 4:
         max_corr = 10
-    if max_rating >= 4:
         max_rating = 4
-        
+    elif max_rating >= 4:
+        max_rating = 10 - max_corr + 4
+    
     # how many movies to take from each year range
     # when there are fewer year ranges than movies taken
-    corr_cycle = max_corr // half_decades
     index_count = 0
+    part_count = 0
     
     # guarantee 20 items are taken, intersection of lists
     corr_count = 0
     rating_count = 0
-                
+    
     while total < max_total:
-        
+
         # ensure a balance of correlation to ratings
         if corr_count < max_corr:
-            if half_decades <= max_corr:
-                
-                for i in range(corr_cycle):
-                    corr_extract = random.choice(year_corr[index_count])
-                    corr_id = corr_extract[0]
-                    corr_match = False
-                    for title in real_values:
-                        if title[0] == corr_id:
-                            corr_match = True
-                            ind = year_corr[index_count].index(corr_extract)
-                            year_corr[index_count].pop(ind)
-                    
-                    if not corr_match:
-                        real_values.append(corr_extract[1])
-                        ind = year_corr[index_count].index(corr_extract)
+            if year_range < max_corr:
+                corr_extract = random.choices(year_corr[index_count],
+                                weights=weight_votes[index_count])
+                corr_id = corr_extract[0][0]
+                corr_match = False
+                for title in real_values:
+                    if title[0] == corr_id:
+                        corr_match = True
+                        ind = year_corr[index_count].index(corr_extract[0])
                         year_corr[index_count].pop(ind)
-                        corr_count += 1
-                        total += 1
-                        
-                        if corr_count == max_corr or total == max_total:
-                            break
+                        weight_votes[index_count].pop(ind) 
+                    
+                if not corr_match:
+                    real_values.append(corr_extract[0])
+                    ind = year_corr[index_count].index(corr_extract[0])
+                    year_corr[index_count].pop(ind)
+                    weight_votes[index_count].pop(ind)
+                    corr_count += 1
+                    total += 1
                     
                 index_count += 1
-                if index_count == half_decades:
+                if index_count == year_range:
                     index_count = 0
                     
             else:
                 corr_cyclelist = [ind for ind in range(len(year_corr))]
                 random_index = random.choice(corr_cyclelist)
-                corr_extract = random.choice(year_corr[random_index])
-                corr_id = corr_extract[0]
+                corr_extract = random.choices(year_corr[random_index],
+                                weights=weight_votes[random_index])
+                corr_id = corr_extract[0][0]
                 corr_match = False
+                
                 for title in real_values:
                     if title[0] == corr_id:
                         corr_match = True
-                        year_corr.pop(random_index)
-                        
+                        pop_ind = year_corr[random_index].index(corr_extract[0])
+                        year_corr[random_index].pop(pop_ind)
+                        weight_votes[random_index].pop(pop_ind)
+                
                 if not corr_match:
-                    real_values.append(corr_extract[1])
-                    year_corr.pop(random_index)
+                    real_values.append(corr_extract[0])
                     corr_count += 1
                     total += 1
+                    
+                    # less than 10 partitions, don't pop partition yet
+                    if part_count + partition_num < max_corr:
+                        part_count += 1
+                        
+                    # 10 partitions or movies have been added if fewer than 10 
+                    else:
+                        year_corr.pop(random_index)
+                        weight_votes.pop(random_index)
             
         if total == max_total:
             break
         
         # ensure a balance of rating to correlation
         if rating_count < max_rating:
-            rating_id = rating_sorted[0][0]
+            rating_extract = random.choices(rating_subset,
+                            weights=weight_ratings)
+            rating_id = rating_extract[0][0]
             rating_match = False
             for title in real_values:
                 if title[0] == rating_id:
                     rating_match = True
-                    rating_sorted.pop(0)
+                    ind = rating_subset.index(rating_extract[0])
+                    rating_subset.pop(ind)
+                    weight_ratings.pop(ind)
                     
             if not rating_match:
-                real_values.append(rating_sorted[0][1])
-                rating_sorted.pop(0)
+                real_values.append(rating_extract[0])
+                ind = rating_subset.index(rating_extract[0])
+                rating_subset.pop(ind)
+                weight_ratings.pop(ind)
                 rating_count += 1
                 total += 1
                 
@@ -809,16 +902,16 @@ def createList():
     top_frame = tk.Frame(master=window_display, bg='white')
     text_frame = tk.Frame(master=top_frame, bg='white')
     
-    # user did submit preferences, FIGURE OUT GOOD WAY TO DISPLAY
+    # user did submit preferences
     if real_values and genres:
 
         # iterate through items in list, create label
         # and button for each
         for i in range(len(real_values)):
-            name_val = real_values[i][0]
-            year_val = real_values[i][1]
-            genres_val = real_values[i][2]
-            corr = real_values[i][4]
+            name_val = real_values[i][1][0]
+            year_val = real_values[i][1][1]
+            genres_val = real_values[i][1][2]
+            corr = real_values[i][1][5]
             corr_val = round(corr, 6)
             label_num = i + 1
             
@@ -835,10 +928,10 @@ def createList():
             button_movie = tk.Button(master=label_frame, text='+',
                        font=('Garamond',16,'bold'), fg='dark green', height=1, width=4,
                     command=partial(addMovie, real_values[i]), relief='raised')
-            button_movie.pack(side='top')
+            button_movie.pack(side='left') 
+            
             label_frame.pack(side='top')
-
-    
+            
     # force user to select genres to generate a movie list
     else:
         text_label = tk.Label(master=text_frame, text='No movies found.',
@@ -859,7 +952,7 @@ def createList():
                         command=window_display.destroy,
                        relief='raised', fg='red', font=('Garamond',16,'bold'))
     exit_button.pack(side='left', expand=True)
-        
+    
     # save list button
     save_button = tk.Button(master=bottom_frame, text='Save List',
                         command=lambda:[saveList(real_values)],
