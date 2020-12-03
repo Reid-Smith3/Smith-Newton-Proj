@@ -130,7 +130,6 @@ def openSheet2():
     w_values = result_writer.get('values', [])
     
 #     print('Sheet 2 Loaded')
-
 def addGenre(button):
     """Add genres from each clicked button to the genre list"""
     genres.append(button)
@@ -478,7 +477,7 @@ def mainUI():
     # create list of possible years accessible in database
     option_list = []
     start = 1930
-    for i in range(91):
+    for i in range(81):
         option_list.append(str(i+start))
 
     year_menu1 = tk.OptionMenu(start_frame, year_start_var, *option_list,)
@@ -492,7 +491,7 @@ def mainUI():
     # global variable to modify end year variable from dropdown
     global year_end_var
     year_end_var = tk.IntVar(frame_year)
-    year_end_var.set(2020)
+    year_end_var.set(2010)
     
     end_year = tk.Label(master=end_frame, text='End Year:', bg='white',
                     font=('Garamond',20,'bold'), fg='black')
@@ -1023,7 +1022,7 @@ def subsequent():
     global year_start
     year_start = 1930
     global year_end
-    year_end = 2020
+    year_end = 2010
     
     global lower
     lower = 0
