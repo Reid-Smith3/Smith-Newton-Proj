@@ -225,7 +225,7 @@ def info():
     reid_frame = tk.Frame(master=window_info, bg='white')
     reid_label = tk.Label(master=reid_frame, text='About Reid', bg='white',
                     font=('Garamond',30,'bold'), fg='steel blue')
-    reid_info = tk.Label(master=reid_frame, text='Use this space to give a brief background about ourselves, \n our contributions to the project, as well as our favorite movies.',
+    reid_info = tk.Label(master=reid_frame, text='For me, there is nothing more frustrating than sitting down to unwind \n after a long day of work, only to be unable to find anything to watch. \n So, Christian and I decided to fix that. Enjoy. \n Also, be sure to watch Good Will Hunting, again or for the first time',
                     bg='white', font=('Garamond',14), fg='steel blue')
     reid_label.pack(side='top', expand=True)
     reid_info.pack(side='top', expand=True)
@@ -245,6 +245,7 @@ def info():
     # favorite movies here
 
     window_info.mainloop()
+    
 
 def advancedPref():
     """ Create the additional user interface for finetuning
@@ -350,7 +351,7 @@ def userList():
             label_frame = tk.Frame(master=text_frame, bg='white', width=70)
             text_label = tk.Label(master=label_frame, text=str(label_num) + '. '
                             + str(name_val) + ': ' + str(year_val) + ': ' +
-                            str(genres_val) + ': ' + str(corr_val) + '\n',
+                            str(genres_val) + '\n', #+ str(corr_val) + '\n',
                             font=('Garamond', 14), bg='white',
                             anchor='w', width=66)
             text_label.pack(side='left')
@@ -400,20 +401,20 @@ def initializeUI():
 
     # title of application
     frame_title = tk.Frame(master=window, bg='white')
-    title = tk.Label(master=frame_title, text='The GOAT Movie Recommendation', bg='white',
+    title = tk.Label(master=frame_title, text='Christian Reid Movie Algorithm', bg='white',
                     font=('Garamond',36,'bold'), fg='steel blue')
     title.pack(side='top')
     title_info = tk.Label(master=frame_title, text='Brought to you by: Christian Newton and Reid Smith',
                     bg='white', font=('Garamond',16,'bold'), fg='black')
     title_info.pack(side='top')
-    title_info2 = tk.Label(master=frame_title, text='Sponsored by: Philip Caplan, Esq.',
+    title_info2 = tk.Label(master=frame_title, text='Sponsored by: Philip Caplan',
                     bg='white', font=('Garamond',12), fg='gray')
     title_info2.pack(side='top')
     frame_title.pack(side='top')
 
     # load image (CHANGE TO LOGO)
-    img = ImageTk.PhotoImage(Image.open('newtreid.jpg'))
-    panel = tk.Label(master=window, image=img, bg='white')
+    img = ImageTk.PhotoImage(Image.open('logofinal.jpg'))
+    panel = tk.Label(master=window, height=600, image=img, bg='white')
     panel.pack(side='top', fill='both',expand=True)
 
     # button performs 3 tasks: destroys the window, loads info
@@ -1142,7 +1143,7 @@ def createList():
             label_frame = tk.Frame(master=text_frame, bg='white', width=70)
             text_label = tk.Label(master=label_frame, text=str(label_num) + '. '
                             + str(name_val) + ': ' + str(year_val) + ': ' +
-                            str(genres_val) + ': ' + str(corr_val) + '\n',
+                            str(genres_val) + '\n', #+ str(corr_val) + '\n',
                             font=('Garamond', 14), bg='white',
                             anchor='w', width=66)
             text_label.pack(side='left')
