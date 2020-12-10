@@ -1,4 +1,4 @@
-## [THE GOAT PROJECT!!]
+## Christian Reid Movie Algorithm
 ### Middlebury College, Computer Science CSCI 701 (Fall 2020)
 Why isn't this working?
 
