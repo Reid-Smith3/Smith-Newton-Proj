@@ -22,7 +22,10 @@ The one heads up we'll give you is that sometimes, based on your search input, t
 ### REFERENCES
 Feeling inspired? So are we. Check out the following links if you want to learn more!
 [Spotify](https://onezero.medium.com/how-spotifys-algorithm-knows-exactly-what-you-want-to-listen-to-4b6991462c5c)
+
 [More Spotify](https://medium.com/swlh/how-is-spotifys-thriving-recommendation-system-becoming-a-new-advertising-platform-a2b97ffe2012)
-[Genre Correlations] (https://www.sciencedirect.com/science/article/abs/pii/S0957417412001509)
-[Our Presentation] (https://midd.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=985e345a-0238-4cf0-a1bb-ac860130a55d)
+
+[Genre Correlations](https://www.sciencedirect.com/science/article/abs/pii/S0957417412001509)
+
+[Our Presentation](https://midd.hosted.panopto.com/Panopto/Pages/Viewer.aspx?id=985e345a-0238-4cf0-a1bb-ac860130a55d)
 
