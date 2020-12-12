@@ -21,6 +21,7 @@ The one heads up we'll give you is that sometimes, based on your search input, t
 
 ### REFERENCES
 Feeling inspired? So are we. Check out the following links if you want to learn more!
+
 [Spotify](https://onezero.medium.com/how-spotifys-algorithm-knows-exactly-what-you-want-to-listen-to-4b6991462c5c)
 
 [More Spotify](https://medium.com/swlh/how-is-spotifys-thriving-recommendation-system-becoming-a-new-advertising-platform-a2b97ffe2012)
