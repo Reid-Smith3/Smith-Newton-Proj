@@ -131,8 +131,6 @@ def openSheet2():
     t_values = result_title.get('values', [])
     d_values = result_director.get('values', [])
     w_values = result_writer.get('values', [])
-    
-#     print('Sheet 2 Loaded')
 
 def addGenre(button):
     """Add genres from each clicked button to the genre list"""
@@ -220,12 +218,13 @@ def info():
     allowing the user to generate lsits from developer picks"""
 
     window_info = tk.Tk()
+    window_info.configure(bg='white')
 
     # Reid's frame
     reid_frame = tk.Frame(master=window_info, bg='white')
     reid_label = tk.Label(master=reid_frame, text='About Reid', bg='white',
                     font=('Garamond',30,'bold'), fg='steel blue')
-    reid_info = tk.Label(master=reid_frame, text='For me, there is nothing more frustrating than sitting down to unwind \n after a long day of work, only to be unable to find anything to watch. \n So, Christian and I decided to fix that. Enjoy. \n Also, be sure to watch Good Will Hunting, again or for the first time',
+    reid_info = tk.Label(master=reid_frame, text='For me, there is nothing more frustrating than sitting down to unwind \n after a long day of work, only to be unable to find anything to watch. \n So, Christian and I decided to fix that. Enjoy. \n Also, be sure to watch Good Will Hunting, again or for the first time.',
                     bg='white', font=('Garamond',14), fg='steel blue')
     reid_label.pack(side='top', expand=True)
     reid_info.pack(side='top', expand=True)
@@ -235,21 +234,21 @@ def info():
     newt_frame = tk.Frame(master=window_info, bg='light grey')
     newt_label = tk.Label(master=newt_frame, text='About Christian', bg='light grey',
                     font=('Garamond',30,'bold'), fg='IndianRed4')
-    newt_info = tk.Label(master=newt_frame, text='Use this space to give a brief background about ourselves, \n our contributions to the project, as well as our favorite movies.',
+    newt_info = tk.Label(master=newt_frame, text='Growing up, there was nothing I loved more than watching Ferris Bueller\'s Day Off \n after a long day of recess. \"I\'m Abe Froman, the Sausage King of Chicago! I have a reservation!\", \n I\'d scream to my bewildered dad as I plopped down into my seat at the dinner table. \n \"I think watching Apocalypse Now would do you some good\", he\'d say. \n Why not watch both?',
                     bg='light grey',font=('Garamond',14), fg='IndianRed4')
     newt_label.pack(side='top', expand=True)
     newt_info.pack(side='top', expand=True)
     newt_frame.pack(side='left', expand=True)
 
     # EASTER EGG CONTENT to generate lists of our
-    # favorite movies here
+    # favorite movies here (future implementation sadly)
 
     window_info.mainloop()
     
 
 def advancedPref():
-    """ Create the additional user interface for finetuning
-    the user's preferences"""
+    """Create the additional user interface for
+    the finetuning of prefereces"""
 
     preferences = tk.Tk()
     preferences.configure(bg='white')
@@ -330,7 +329,7 @@ def userList():
     text_frame = tk.Frame(master=top_frame, bg='white')
 
     # user did submit preferences
-    # WHAT TO DO IF MORE THAN 20 MOVIES
+    # does not scale for more than 20 movies (future fix)
     if user_list:
 
         # iterate through items in list, create label
@@ -412,7 +411,7 @@ def initializeUI():
     title_info2.pack(side='top')
     frame_title.pack(side='top')
 
-    # load image (CHANGE TO LOGO)
+    # load image
     img = ImageTk.PhotoImage(Image.open('logofinal.jpg'))
     panel = tk.Label(master=window, height=600, image=img, bg='white')
     panel.pack(side='top', fill='both',expand=True)
@@ -457,7 +456,8 @@ def mainUI():
                  'Film-Noir','Sport','Family','Documentary','History']
     genre_colors = ['IndianRed4','steel blue','DeepPink3','slate gray','SpringGreen3',
                     'blue4','red3','DarkOrange2','dark green','purple4']
-
+    
+    # available reliefs: flat, groove, raised, ridge, solid, sunken
     for i in range(len(db_genres)):
         if i % 5 == 0:
             button_frame = tk.Frame(master=frame_genre, bg='white')
@@ -467,7 +467,7 @@ def mainUI():
                        font=('Garamond',16), fg=genre_colors[i%10],
                     command=partial(addGenre, db_genres[i]), relief='raised', bg='white')
         button_genre.pack(side='top')
-    # relief: flat, groove, raised, ridge, solid, sunken
+
 
     frame_genre.pack(side='top',expand=True)
 
@@ -988,7 +988,7 @@ def createList():
     top_frame = tk.Frame(master=window_display, bg='white')
     text_frame = tk.Frame(master=top_frame, bg='white')
     
-    # no genres entered by the user
+    # no genres entered by the user, abort search
     if not genres:
         text_label = tk.Label(master=text_frame, text='No genres entered.',
                             bg='white', font=('Garamond',14))
@@ -1231,4 +1231,3 @@ def run():
     
 if __name__ == '__main__':
     run()
-
